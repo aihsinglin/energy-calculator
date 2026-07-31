@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Energy Desk — 能源數據換算工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+TC:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1B24;
+    --paper:#F7F5F0;
+    --panel:#FFFFFF;
+    --steel:#3D5A6C;
+    --steel-soft:#EAF0F2;
+    --amber:#E8A33D;
+    --amber-dim:#F6DDAF;
+    --line:#DCD7CB;
+    --muted:#6B7580;
+    --good:#3F7856;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans','IBM Plex Sans TC',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:40px 24px 80px;}
+
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--steel);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);}
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:32px;
+    font-weight:600;
+    margin:0 0 6px;
+    letter-spacing:-.01em;
+  }
+  header p{margin:0;color:var(--muted);font-size:14.5px;max-width:56ch;line-height:1.6;}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    background:var(--line);
+    padding:2px;
+    border-radius:10px;
+    margin:28px 0 20px;
+    overflow-x:auto;
+  }
+  nav.tabs button{
+    flex:1;
+    white-space:nowrap;
+    border:none;
+    background:transparent;
+    color:var(--steel);
+    font-family:'IBM Plex Sans','IBM Plex Sans TC',sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    padding:11px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease;
+  }
+  nav.tabs button.active{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  nav.tabs button:not(.active):hover{background:#ffffffaa;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:28px;
+    display:none;
+  }
+  .panel.active{display:block;}
+  .panel h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0 0 4px;
+  }
+  .panel .sub{color:var(--muted);font-size:13px;margin:0 0 22px;line-height:1.6;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+  @media(max-width:640px){.grid{grid-template-columns:1fr;}}
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    font-weight:500;
+    color:var(--steel);
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .field .hint{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5;}
+  input[type="number"], select{
+    width:100%;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    padding:11px 12px;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    background:var(--steel-soft);
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  select{font-family:'IBM Plex Sans','IBM Plex Sans TC',sans-serif;cursor:pointer;}
+  input[type="number"]:focus, select:focus{border-color:var(--amber);background:#fff;}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  .meter-stack{display:flex;flex-direction:column;gap:10px;}
+  .meter{
+    background:var(--ink);
+    border-radius:10px;
+    padding:14px 16px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .meter .m-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--amber-dim);
+    opacity:.85;
+  }
+  .meter .m-value{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:19px;
+    font-weight:600;
+    color:var(--amber);
+    text-align:right;
+    word-break:break-all;
+  }
+  .meter.primary{background:linear-gradient(135deg,var(--ink),#1a2c3a);}
+  .meter.primary .m-value{font-size:24px;}
+
+  .note{
+    margin-top:20px;
+    padding:12px 14px;
+    background:var(--steel-soft);
+    border-left:3px solid var(--steel);
+    border-radius:0 8px 8px 0;
+    font-size:12.5px;
+    color:var(--steel);
+    line-height:1.6;
+  }
+  .note b{color:var(--ink);}
+
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .preset-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:5px 10px;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--steel);
+    cursor:pointer;
+  }
+  .preset-btn:hover{border-color:var(--amber);color:var(--ink);}
+
+  footer{
+    margin-top:24px;
+    font-size:11.5px;
+    color:var(--muted);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>ENERGY DESK — WORKING CALCULATOR</div>
+    <h1>能源數據換算工具</h1>
+    <p>單位換算、電費試算、碳排/等效住宅戶數、裝置容量推估年發電量 — 常用轉換一次收齊，所有欄位可自行修改假設值。</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-tab="units">單位換算</button>
+    <button data-tab="cost">電費試算</button>
+    <button data-tab="co2">碳排 / 等效住宅</button>
+    <button data-tab="capacity">容量 → 年發電量</button>
+  </nav>
+
+  <!-- TAB 1: UNIT CONVERTER -->
+  <section class="panel active" id="units">
+    <h2>能源單位換算</h2>
+    <p class="sub">輸入任一單位的數值，其餘單位即時換算。1 度 = 1 kWh。</p>
+    <div class="grid">
+      <div>
+        <div class="field">
+          <label>輸入數值</label>
+          <div class="row2">
+            <input type="number" id="u-value" value="17000000" step="any">
+            <select id="u-unit">
+              <option value="kwh">度 / kWh</option>
+              <option value="mwh">MWh</option>
+              <option value="gwh">GWh</option>
+              <option value="twh">TWh</option>
+            </select>
+          </div>
+          <div class="hint">預設帶入前面對話中的「1,700 萬度」範例，可直接修改。</div>
+        </div>
+      </div>
+      <div class="meter-stack">
+        <div class="meter primary"><span class="m-label">kWh / 度</span><span class="m-value" id="out-kwh">—</span></div>
+        <div class="meter"><span class="m-label">MWh</span><span class="m-value" id="out-mwh">—</span></div>
+        <div class="meter"><span class="m-label">GWh</span><span class="m-value" id="out-gwh">—</span></div>
+        <div class="meter"><span class="m-label">TWh</span><span class="m-value" id="out-twh">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: COST CALCULATOR -->
+  <section class="panel" id="cost">
+    <h2>電費 / 購電成本試算</h2>
+    <p class="sub">用電量 × 單價 = 總費用；也可反推「這筆預算能買多少電」。</p>
+    <div class="grid">
+      <div>
+        <div class="field">
+          <label>用電量</label>
+          <div class="row2">
+            <input type="number" id="c-usage" value="17000000" step="any">
+            <select id="c-usage-unit">
+              <option value="kwh">度 / kWh</option>
+              <option value="mwh">MWh</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>電力單價</label>
+          <div class="row2">
+            <input type="number" id="c-price" value="4.5" step="any">
+            <select id="c-price-unit">
+              <option value="ntd_kwh">NT$ / kWh</option>
+              <option value="usd_kwh">US$ / kWh</option>
+              <option value="ntd_mwh">NT$ / MWh</option>
+              <option value="usd_mwh">US$ / MWh</option>
+            </select>
+          </div>
+          <div class="hint">單價需自行輸入，工具不內建即時電價。</div>
+        </div>
+      </div>
+      <div class="meter-stack">
+        <div class="meter primary"><span class="m-label">總費用</span><span class="m-value" id="out-cost">—</span></div>
+        <div class="meter"><span class="m-label">換算 / 度</span><span class="m-value" id="out-cost-perkwh">—</span></div>
+        <div class="meter"><span class="m-label">換算 / MWh</span><span class="m-value" id="out-cost-permwh">—</span></div>
+      </div>
+    </div>
+    <div class="note"><b>反推用法：</b>若要用固定預算反推可購電量，把「用電量」欄位留意成你要試算的量，觀察總費用是否符合預算，逐步調整即可（此工具為雙向即時運算，不需切換模式）。</div>
+  </section>
+
+  <!-- TAB 3: CO2 & HOMES -->
+  <section class="panel" id="co2">
+    <h2>碳排減量 / 等效住宅戶數</h2>
+    <p class="sub">套用電網排放係數與住宅平均年用電量，兩者皆為<b>可編輯假設值</b>，請依你手上資料來源的實際係數調整。</p>
+    <div class="grid">
+      <div>
+        <div class="field">
+          <label>再生能源發電量 (MWh/年)</label>
+          <input type="number" id="e-generation" value="24700" step="any">
+        </div>
+        <div class="field">
+          <label>電網排放係數 (kgCO2e / kWh)</label>
+          <input type="number" id="e-factor" value="0.495" step="any">
+          <div class="presets">
+            <button class="preset-btn" data-target="e-factor" data-value="0.495">台灣 2023 (0.495)</button>
+            <button class="preset-btn" data-target="e-factor" data-value="0.386">US 平均 (0.386)</button>
+            <button class="preset-btn" data-target="e-factor" data-value="0.204">CAISO/加州 (0.204)</button>
+          </div>
+          <div class="hint">上列數字為常見公開估計值，僅供起點參考，正式引用前請核對當年度官方係數來源。</div>
+        </div>
+        <div class="field">
+          <label>住宅平均年用電量 (kWh/戶/年)</label>
+          <input type="number" id="e-home" value="4000" step="any">
+          <div class="hint">預設為概略假設值，請依實際引用來源（如 SEIA、台電）調整。</div>
+        </div>
+      </div>
+      <div class="meter-stack">
+        <div class="meter primary"><span class="m-label">年減碳量</span><span class="m-value" id="out-co2">—</span></div>
+        <div class="meter"><span class="m-label">等效住宅戶數 / 年</span><span class="m-value" id="out-homes">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: CAPACITY -> GENERATION -->
+  <section class="panel" id="capacity">
+    <h2>裝置容量 → 年發電量推估</h2>
+    <p class="sub">容量 (MW) × 容量因數 × 8,760 小時 = 年發電量。容量因數依技術與地區差異極大，請自行輸入合理假設。</p>
+    <div class="grid">
+      <div>
+        <div class="field">
+          <label>裝置容量 (MW)</label>
+          <input type="number" id="p-capacity" value="10" step="any">
+        </div>
+        <div class="field">
+          <label>容量因數 (%)</label>
+          <input type="number" id="p-cf" value="28" step="any">
+          <div class="presets">
+            <button class="preset-btn" data-target="p-cf" data-value="16">屋頂太陽能 ~16%</button>
+            <button class="preset-btn" data-target="p-cf" data-value="25">地面型太陽能 ~25%</button>
+            <button class="preset-btn" data-target="p-cf" data-value="35">陸域風電 ~35%</button>
+          </div>
+          <div class="hint">預設數字為粗略量級示意，非特定案場數據。</div>
+        </div>
+      </div>
+      <div class="meter-stack">
+        <div class="meter primary"><span class="m-label">年發電量</span><span class="m-value" id="out-annual-mwh">—</span></div>
+        <div class="meter"><span class="m-label">年發電量 (kWh)</span><span class="m-value" id="out-annual-kwh">—</span></div>
+        <div class="meter"><span class="m-label">GWh / 年</span><span class="m-value" id="out-annual-gwh">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>所有預設數字僅為示意假設，供內部試算使用；對外引用前請以原始資料來源核實。</footer>
+</div>
+
+<script>
+function fmt(n, maxDec=2){
+  if(!isFinite(n)) return '—';
+  return n.toLocaleString('en-US',{maximumFractionDigits:maxDec});
+}
+
+// Tabs
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Preset buttons
+document.querySelectorAll('.preset-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const target=document.getElementById(btn.dataset.target);
+    target.value=btn.dataset.value;
+    target.dispatchEvent(new Event('input'));
+  });
+});
+
+// --- TAB 1: Unit converter ---
+function computeUnits(){
+  const val=parseFloat(document.getElementById('u-value').value)||0;
+  const unit=document.getElementById('u-unit').value;
+  const toKwh={kwh:1, mwh:1e3, gwh:1e6, twh:1e9};
+  const kwh = val * toKwh[unit];
+  document.getElementById('out-kwh').textContent = fmt(kwh,2);
+  document.getElementById('out-mwh').textContent = fmt(kwh/1e3,4);
+  document.getElementById('out-gwh').textContent = fmt(kwh/1e6,6);
+  document.getElementById('out-twh').textContent = fmt(kwh/1e9,9);
+}
+['u-value','u-unit'].forEach(id=>document.getElementById(id).addEventListener('input',computeUnits));
+computeUnits();
+
+// --- TAB 2: Cost calculator ---
+function computeCost(){
+  const usage=parseFloat(document.getElementById('c-usage').value)||0;
+  const usageUnit=document.getElementById('c-usage-unit').value;
+  const price=parseFloat(document.getElementById('c-price').value)||0;
+  const priceUnit=document.getElementById('c-price-unit').value;
+
+  const usageKwh = usageUnit==='mwh' ? usage*1000 : usage;
+  let pricePerKwh;
+  if(priceUnit==='ntd_kwh'||priceUnit==='usd_kwh') pricePerKwh=price;
+  else pricePerKwh=price/1000; // per MWh -> per kWh
+
+  const currency = priceUnit.startsWith('ntd') ? 'NT$' : 'US$';
+  const total = usageKwh * pricePerKwh;
+
+  document.getElementById('out-cost').textContent = currency+' '+fmt(total,0);
+  document.getElementById('out-cost-perkwh').textContent = currency+' '+fmt(pricePerKwh,4);
+  document.getElementById('out-cost-permwh').textContent = currency+' '+fmt(pricePerKwh*1000,2);
+}
+['c-usage','c-usage-unit','c-price','c-price-unit'].forEach(id=>document.getElementById(id).addEventListener('input',computeCost));
+computeCost();
+
+// --- TAB 3: CO2 & Homes ---
+function computeCo2(){
+  const gen=parseFloat(document.getElementById('e-generation').value)||0; // MWh
+  const factor=parseFloat(document.getElementById('e-factor').value)||0; // kgCO2e/kWh
+  const homeUsage=parseFloat(document.getElementById('e-home').value)||1; // kWh/home/yr
+
+  const genKwh = gen*1000;
+  const co2Kg = genKwh*factor;
+  const co2Tonnes = co2Kg/1000;
+  const homes = genKwh/homeUsage;
+
+  document.getElementById('out-co2').textContent = fmt(co2Tonnes,1)+' tCO2e';
+  document.getElementById('out-homes').textContent = fmt(homes,0)+' 戶';
+}
+['e-generation','e-factor','e-home'].forEach(id=>document.getElementById(id).addEventListener('input',computeCo2));
+computeCo2();
+
+// --- TAB 4: Capacity -> Generation ---
+function computeCapacity(){
+  const cap=parseFloat(document.getElementById('p-capacity').value)||0; // MW
+  const cf=parseFloat(document.getElementById('p-cf').value)||0; // %
+
+  const annualMwh = cap*(cf/100)*8760;
+  document.getElementById('out-annual-mwh').textContent = fmt(annualMwh,1)+' MWh';
+  document.getElementById('out-annual-kwh').textContent = fmt(annualMwh*1000,0)+' kWh';
+  document.getElementById('out-annual-gwh').textContent = fmt(annualMwh/1000,3)+' GWh';
+}
+['p-capacity','p-cf'].forEach(id=>document.getElementById(id).addEventListener('input',computeCapacity));
+computeCapacity();
+</script>
+</body>
+</html>
